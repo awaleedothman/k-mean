@@ -15,10 +15,12 @@ public class Driver {
 
 
     public static void main(String[] args) throws IOException {
-        final int MAX_ITER = 100, TOLERANCE = 2;
-        final Path centroidsPath = new Path(args[2]);
+        assert args.length == 4;
 
-        assert args.length == 3;
+        final int MAX_ITER = 100, TOLERANCE = 2;
+        final Path centroidsPath = new Path(args[1] + "/centroids.txt");
+        final Path rangesPath = new Path(args[2]);
+        final int K = Integer.parseInt(args[3]);
 
         JobConf conf = new JobConf(Driver.class);
         conf.setJobName("k-mean");
@@ -31,14 +33,14 @@ public class Driver {
         conf.setInputFormat(TextInputFormat.class);
         conf.setOutputFormat(TextOutputFormat.class);
         FileInputFormat.setInputPaths(conf, new Path(args[0]));
-        FileOutputFormat.setOutputPath(conf, new Path(args[1]));
+        FileOutputFormat.setOutputPath(conf, new Path("tmp"));
 
         ArrayList<Integer> prev, curr;
         int iterNum = 0, res;
 
         FileSystem fs = FileSystem.getLocal(conf);
 
-        prev = readCentroids(centroidsPath);
+        prev = generateCentroids(centroidsPath, rangesPath, K);
 
         do {
             iterNum++;
@@ -53,13 +55,22 @@ public class Driver {
     }
 
 
+    private static ArrayList<Integer> generateCentroids(Path centroidsPath, Path rangesPath, int k) {
+        ArrayList<Integer> centroids = new ArrayList<>();
+        //TODO
+        //read ranges
+        //open file for writing
+        //randomly generate, write in file and update array
+        return centroids;
+    }
+
     private static ArrayList<Integer> readCentroids(Path centroidsPath) throws FileNotFoundException {
         Scanner scanner = new Scanner(new File(centroidsPath.toString()));
         ArrayList<Integer> centroids = new ArrayList<>();
         while (scanner.hasNextLine()) {
             String[] line = scanner.nextLine().replaceAll("[^\\d.,]", "").split(",");
-            int id = Integer.parseInt(line[0]) - 1;
-            int density = Integer.parseInt(line[3]);
+            int id = Integer.parseInt(line[0].trim()) - 1;
+            int density = Integer.parseInt(line[3].trim());
             centroids.add(id, density);
         }
         return centroids;

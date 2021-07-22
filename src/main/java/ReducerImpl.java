@@ -18,10 +18,10 @@ public class ReducerImpl extends MapReduceBase implements Reducer<IntWritable, P
         double sumX = 0, sumY = 0;
 
         while (iterator.hasNext()) {
-            count++;
             Point p = iterator.next();
             sumX += p.getX();
             sumY += p.getY();
+            count++;
         }
 
         outputCollector.collect(intWritable, new Centroid(sumX / count, sumY / count, count));

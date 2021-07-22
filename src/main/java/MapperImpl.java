@@ -25,10 +25,10 @@ public class MapperImpl extends MapReduceBase implements Mapper<LongWritable, Te
             while (scanner.hasNextLine()) {
                 String[] line = scanner.nextLine().replaceAll("[^\\d.,]", "").split(",");
                 assert line.length == 4;
-                double x = Double.parseDouble(line[1]);
-                double y = Double.parseDouble(line[2]);
-                Centroid centroid = new Centroid(x, y, Integer.parseInt(line[3]));
-                centroid.setId(Integer.parseInt(line[0]));
+                double x = Double.parseDouble(line[1].trim());
+                double y = Double.parseDouble(line[2].trim());
+                Centroid centroid = new Centroid(x, y, Integer.parseInt(line[3].trim()));
+                centroid.setId(Integer.parseInt(line[0].trim()));
                 centroids.add(centroid);
             }
         } catch (IOException ignored) {
@@ -41,18 +41,20 @@ public class MapperImpl extends MapReduceBase implements Mapper<LongWritable, Te
                     OutputCollector<IntWritable, Point> outputCollector, Reporter reporter) throws IOException {
 
         Point p = Point.getFromXY(text.toString(), ",");
-        Double minDistance = null;
-        Integer closestPoint = null;
+        double minDistance;
+        int closestPoint;
 
         assert !centroids.isEmpty();
 
-        for (Centroid centroid : centroids) {
-            double distance = p.distanceFrom(centroid);
+        Centroid centroid = centroids.get(0);
+        double distance = p.distanceFrom(centroid);
+        minDistance = distance;
+        closestPoint = centroid.getId();
 
-            if (minDistance == null) {
-                minDistance = distance;
-                closestPoint = centroid.getId();
-            } else if (distance < minDistance) {
+        for (int i = 1; i < centroids.size(); i++) {
+            centroid = centroids.get(i);
+            distance = p.distanceFrom(centroid);
+            if (distance < minDistance) {
                 minDistance = distance;
                 closestPoint = centroid.getId();
             }

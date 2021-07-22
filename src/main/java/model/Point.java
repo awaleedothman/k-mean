@@ -21,7 +21,7 @@ public class Point implements Writable {
     public static Point getFromXY(String line, String delimiter) {
         line = line.trim();
         String[] coordinates = line.split(delimiter);
-        return new Point(Double.parseDouble(coordinates[0]), Double.parseDouble(coordinates[1]));
+        return new Point(Double.parseDouble(coordinates[0].trim()), Double.parseDouble(coordinates[1].trim()));
     }
 
 
