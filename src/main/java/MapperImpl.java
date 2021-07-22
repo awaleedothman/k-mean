@@ -23,7 +23,7 @@ public class MapperImpl extends MapReduceBase implements Mapper<LongWritable, Te
             InputStream inputStream = fs.open(new Path("centroids.txt"));
             Scanner scanner = new Scanner(inputStream);
             while (scanner.hasNextLine()) {
-                String[] line = scanner.nextLine().split(",");
+                String[] line = scanner.nextLine().replaceAll("[^\\d.,]", "").split(",");
                 assert line.length == 4;
                 double x = Double.parseDouble(line[1]);
                 double y = Double.parseDouble(line[2]);

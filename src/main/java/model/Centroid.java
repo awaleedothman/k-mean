@@ -44,4 +44,8 @@ public class Centroid extends Point{
     public Integer getId() {
         return this.id;
     }
+
+    public int getMemberNum() {
+        return memberNum;
+    }
 }

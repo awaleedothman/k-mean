@@ -5,16 +5,21 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapred.*;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 public class Driver {
 
-    private static int K = 3, MAX_ITER = 100;
-    private static double EPSILON = 0.01;
-
 
     public static void main(String[] args) throws IOException {
+        final int MAX_ITER = 100, TOLERANCE = 2;
+        final Path centroidsPath = new Path(args[2]);
+
+        assert args.length == 3;
+
         JobConf conf = new JobConf(Driver.class);
         conf.setJobName("k-mean");
         conf.setOutputKeyClass(IntWritable.class);
@@ -28,35 +33,44 @@ public class Driver {
         FileInputFormat.setInputPaths(conf, new Path(args[0]));
         FileOutputFormat.setOutputPath(conf, new Path(args[1]));
 
-        ArrayList<Point> prev = new ArrayList<>();
-        ArrayList<Point> curr = new ArrayList<>();
-        int iterNum = 0;
-        Path centroidsPath = new Path("centroids.txt");
+        ArrayList<Integer> prev, curr;
+        int iterNum = 0, res;
+
         FileSystem fs = FileSystem.getLocal(conf);
 
-        prev = generateCentroids();
-        writeCentroids(prev, centroidsPath);
+        prev = readCentroids(centroidsPath);
 
         do {
             iterNum++;
             JobClient.runJob(conf);
-            //TODO: update prev and curr
             fs.copyFromLocalFile(true, true, new Path(args[1] + "/part-00000"), centroidsPath);
             fs.delete(new Path(args[1]), true);
-        } while (needsMore(prev, curr) && iterNum < MAX_ITER);
+            curr = readCentroids(centroidsPath);
+            res = compareCentroids(prev, curr);
+            prev = curr;
+
+        } while (res > TOLERANCE && iterNum < MAX_ITER);
     }
 
-    private static ArrayList<Point> generateCentroids() {
-        //TODO
-        return new ArrayList<>();
+
+    private static ArrayList<Integer> readCentroids(Path centroidsPath) throws FileNotFoundException {
+        Scanner scanner = new Scanner(new File(centroidsPath.toString()));
+        ArrayList<Integer> centroids = new ArrayList<>();
+        while (scanner.hasNextLine()) {
+            String[] line = scanner.nextLine().replaceAll("[^\\d.,]", "").split(",");
+            int id = Integer.parseInt(line[0]) - 1;
+            int density = Integer.parseInt(line[3]);
+            centroids.add(id, density);
+        }
+        return centroids;
     }
 
-    private static void writeCentroids(ArrayList<Point> points, Path centroidsPath) {
-        //TODO
-    }
+    private static int compareCentroids(ArrayList<Integer> prev, ArrayList<Integer> curr) {
+        int diff = 0;
 
-    private static boolean needsMore(ArrayList<Point> prev, ArrayList<Point> curr) {
-        //TODO
-        return false;
+        for (int i = 0; i < prev.size(); i++)
+            diff += Math.abs(prev.get(i) - curr.get(i));
+
+        return diff / 2;
     }
 }
