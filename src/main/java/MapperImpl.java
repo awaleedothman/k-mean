@@ -20,7 +20,7 @@ public class MapperImpl extends MapReduceBase implements Mapper<LongWritable, Te
     public void configure(JobConf job) {
         try {
             FileSystem fs = FileSystem.getLocal(job);
-            InputStream inputStream = fs.open(new Path("centroids.txt"));
+            InputStream inputStream = fs.open(new Path("output/centroids.txt"));
             Scanner scanner = new Scanner(inputStream);
             while (scanner.hasNextLine()) {
                 String[] line = scanner.nextLine().replaceAll("[^\\d.,]", "").split(",");
