@@ -11,6 +11,9 @@ import java.util.Scanner;
 
 public class Driver {
 
+    private static final String CENTROIDS_DIR = "output";
+    private static final String CENTROIDS_FILE = "centroids.txt";
+
     public static void main(String[] args) throws IOException {
         assert args.length == 3;
 
@@ -18,7 +21,7 @@ public class Driver {
 
         final Path rangesPath = new Path(args[1]);
         final int K = Integer.parseInt(args[2]);
-        final Path centroidsPath = new Path("output/centroids.txt");
+        final Path centroidsPath = new Path(CENTROIDS_DIR + "/" + CENTROIDS_FILE);
 
         JobConf conf = new JobConf(Driver.class);
         conf.setJobName("k-mean");
@@ -38,7 +41,7 @@ public class Driver {
 
         FileSystem fs = FileSystem.getLocal(conf);
 
-        prev = generateCentroids(centroidsPath, rangesPath, K);
+        prev = generateCentroids(rangesPath, K);
 
         do {
             iterNum++;
@@ -53,34 +56,18 @@ public class Driver {
     }
 
 
-    private static ArrayList<Integer> generateCentroids(Path centroidsPath, Path rangesPath, int k)
+    private static ArrayList<Integer> generateCentroids(Path rangesPath, int k)
             throws IOException {
 
         ArrayList<Integer> centroids = new ArrayList<>();
-        double xMin, xMax, yMin, yMax;
-
         Scanner scanner = new Scanner(new File(rangesPath.toString()));
-        String[] line = scanner.nextLine().split(",");
-        xMin = Double.parseDouble(line[0].trim());
-        xMax = Double.parseDouble(line[1].trim());
-        line = scanner.nextLine().split(",");
-        yMin = Double.parseDouble(line[0].trim());
-        yMax = Double.parseDouble(line[1].trim());
 
-        int lastSep = centroidsPath.toString().lastIndexOf("/");
-        String dirName = centroidsPath.toString().substring(0, lastSep);
-        File dir = new File(dirName);
-        if (!dir.mkdirs()) {
-            System.err.println("Error creating output directory. The directory \"output\" may already exist.");
-            System.exit(-1);
-        }
-        String fileName = centroidsPath.toString().substring(lastSep + 1);
-        File f = new File(dir, fileName);
-        if (!f.createNewFile()) {
-            System.err.println("centroids.txt already exists in the given output directory");
-            System.exit(-1);
-        }
+        double[] xRange = readRange(scanner.nextLine());
+        double[] yRange = readRange(scanner.nextLine());
+        double xMin = xRange[0], xMax = xRange[1];
+        double yMin = yRange[0], yMax = yRange[1];
 
+        File f = createCentroidsFile();
         BufferedWriter writer = new BufferedWriter(new FileWriter(f));
         Random random = new Random();
         for (int i = 0; i < k; i++) {
@@ -90,6 +77,30 @@ public class Driver {
         }
         writer.close();
         return centroids;
+    }
+
+    private static File createCentroidsFile() throws IOException {
+        File dir = new File(CENTROIDS_DIR);
+        if (!dir.mkdirs()) {
+            System.err.println("Error creating output directory. The directory may already exist.");
+            System.exit(-1);
+        }
+
+        File f = new File(dir, CENTROIDS_FILE);
+        if (!f.createNewFile()) {
+            System.err.println("Error creating output file inside directory.");
+            System.exit(-1);
+        }
+
+        return f;
+    }
+
+    private static double[] readRange(String line) {
+        double[] range = new double[2];
+        String[] tokens = line.replaceAll("[^\\d.,]", "").split(",");
+        range[0] = Double.parseDouble(tokens[0].trim());
+        range[1] = Double.parseDouble(tokens[1].trim());
+        return range;
     }
 
     private static ArrayList<Integer> readCentroids(Path centroidsPath) throws FileNotFoundException {
