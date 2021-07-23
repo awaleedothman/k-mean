@@ -1,5 +1,4 @@
 import model.Centroid;
-import model.Point;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
@@ -13,7 +12,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 
-public class MapperImpl extends MapReduceBase implements Mapper<LongWritable, Text, IntWritable, Point> {
+public class MapperImpl extends MapReduceBase implements Mapper<LongWritable, Text, IntWritable, Centroid> {
 
     private final ArrayList<Centroid> centroids = new ArrayList<>();
 
@@ -22,15 +21,10 @@ public class MapperImpl extends MapReduceBase implements Mapper<LongWritable, Te
             FileSystem fs = FileSystem.getLocal(job);
             InputStream inputStream = fs.open(new Path("output/centroids.txt"));
             Scanner scanner = new Scanner(inputStream);
-            while (scanner.hasNextLine()) {
-                String[] line = scanner.nextLine().replaceAll("[^\\d.,]", "").split(",");
-                assert line.length == 4;
-                double x = Double.parseDouble(line[1].trim());
-                double y = Double.parseDouble(line[2].trim());
-                Centroid centroid = new Centroid(x, y, Integer.parseInt(line[3].trim()));
-                centroid.setId(Integer.parseInt(line[0].trim()));
-                centroids.add(centroid);
-            }
+
+            while (scanner.hasNextLine())
+                centroids.add(Centroid.getFromRecord(scanner.nextLine(), ","));
+
         } catch (IOException ignored) {
         }
 
@@ -38,9 +32,9 @@ public class MapperImpl extends MapReduceBase implements Mapper<LongWritable, Te
 
     @Override
     public void map(LongWritable longWritable, Text text,
-                    OutputCollector<IntWritable, Point> outputCollector, Reporter reporter) throws IOException {
+                    OutputCollector<IntWritable, Centroid> outputCollector, Reporter reporter) throws IOException {
 
-        Point p = Point.getFromXY(text.toString(), ",");
+        Centroid p = Centroid.getFromXY(text.toString(), ",");
         double minDistance;
         int closestPoint;
 

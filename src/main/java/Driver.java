@@ -1,5 +1,4 @@
 import model.Centroid;
-import model.Point;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
@@ -25,9 +24,9 @@ public class Driver {
         conf.setJobName("k-mean");
         conf.setOutputKeyClass(IntWritable.class);
         conf.setOutputValueClass(Centroid.class);
-        conf.setMapOutputValueClass(Point.class);
         conf.set("mapred.textoutputformat.separator", ",");
         conf.setMapperClass(MapperImpl.class);
+        conf.setCombinerClass(ReducerImpl.class);
         conf.setReducerClass(ReducerImpl.class);
         conf.setInputFormat(TextInputFormat.class);
         conf.setOutputFormat(TextOutputFormat.class);
